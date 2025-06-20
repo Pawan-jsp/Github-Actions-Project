@@ -22,7 +22,6 @@ jobs:
   security-check:
     runs-on: self-hosted
     needs: compile
-
     steps:
     - uses: actions/checkout@v4
     - name: Trivy Installation
@@ -92,6 +91,4 @@ jobs:
       env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
-
-
-  
+          
