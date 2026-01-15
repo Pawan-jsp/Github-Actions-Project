@@ -120,4 +120,3 @@ jobs:
         push: true
         tags: baggipawan/bankapp:latest
         file: ./Dockerfile
-
