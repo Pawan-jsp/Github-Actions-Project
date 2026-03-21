@@ -35,9 +35,4 @@ jobs:
       # Push
       - run: |
           docker push 545009838877.dkr.ecr.ap-south-1.amazonaws.com/github-ecr:latest
-      # Deploy
-      - run: |
-          aws ecs update-service \
-            --cluster infotelecast-uat-cluster \
-            --service infotelecast-uat-frontend \
-            --force-new-deployment
+      
