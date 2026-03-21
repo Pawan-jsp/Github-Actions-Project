@@ -1,23 +1,60 @@
-name: Java CI with Maven
+name: Deploy Frontend to ECS
 
 on:
   push:
-    branches: [ "main" ]
-    
-jobs:
-  build:
+    branches:
+      - main
 
+env:
+  AWS_REGION: ap-south-1
+  AWS_ACCOUNT_ID: 545009838877
+  ECR_REPO: github-ecr
+  ECS_CLUSTER: your-cluster-name
+  ECS_SERVICE: your-service-name
+
+jobs:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      # 1️⃣ Checkout
+      - uses: actions/checkout@v4
 
-  
+      # 2️⃣ AWS Login
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 3️⃣ Login to ECR
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | \
+          docker login --username AWS --password-stdin \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      # 4️⃣ Build Docker Image
+      - name: Build Image
+        run: |
+          docker build -f frontend/Dockerfile -t $ECR_REPO frontend
+
+      # 5️⃣ Tag Image
+      - name: Tag Image
+        run: |
+          docker tag $ECR_REPO:latest \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+
+      # 6️⃣ Push Image
+      - name: Push Image
+        run: |
+          docker push \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+
+      # 7️⃣ Deploy to ECS
+      - name: Deploy
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment
